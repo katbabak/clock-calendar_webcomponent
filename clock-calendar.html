@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+ <template id = "tmpl">
+    <style>
+      #clock-calendar{
+    	color: #FFB6C1;
+	    font-size: 700%;
+	    font-weight: bold;
+	    margin: 200px auto;
+	    text-align: center;
+	    vertical-align: center;
+	    width: 500px;
+	    background-color: #6A5ACD;
+	    
+}
+     :host (.clock-with-calendar) #clock-calendar {
+  display: block;
+ }
+    
+    </style>
+    <div id = "clock-calendar">
+        <content></content>
+    </div>	
+ </template>
+<script>
+   (function(window, document){
+	    let localDocument = document.currentScript.ownerDocument;
+      let tmpl = localDocument.getElementById('tmpl');
+
+      let ClockPrototype = Object.create(HTMLElement.prototype);
+
+      ClockPrototype.createdCallback = function() {
+        let shadowRoot = this.createShadowRoot();
+        shadowRoot.appendChild(tmpl.content.cloneNode(true));
+        this.container = shadowRoot.getElementById('clock-calendar');
+        this.oldVal = '';
+        this.currentState = 'clock';
+        this.clockFormat = 'HH:MM';
+        this.dateFormat = 'DD.MM.YYYY';
+        this.attachEvents();
+        this.start();
+      };
+       window.MyElement  = document.registerElement('clock-calendar', {
+        prototype: ClockPrototype
+      });
+
+      // ClockPrototype.attributeChangedCallback = function(attr, oldVal, newVal){
+      //   if(newVal !== oldVal){
+      //     this[attr] = newVal;
+      //     this.updateValue();
+      //   }
+      // }
+
+      // In this function we make the block update every second updating the values
+
+       ClockPrototype.start = function(){
+       	this.updateValue();
+       	this.makeIntervals = setInterval(() => {
+            this.updateValue();
+        }, 1000 );
+       }
+       
+        // Here we attach necessary events
+
+       ClockPrototype.attachEvents = function(){
+        this.container.addEventListener('mouseover', function(event){
+          this.style.background = '#191970';
+        });
+        this.container.addEventListener('mouseleave', function(event){
+          this.style.background = '';
+        });
+        this.container.addEventListener('click', ()=>{
+          if(this.currentState === 'clock'){
+             this.clockFormat = this.clockFormat === 'HH:MM'? 'HH:MM:SS': 'HH:MM';
+          } else if (this.currentState === 'calendar'){
+             this.dateFormat = this.dateFormat === 'DD.MM.YYYY'? 'MM/DD/YY': 'DD.MM.YYYY';
+          };
+        });
+        this.container.addEventListener('contextmenu', (event) => {
+           event.preventDefault();
+           if (this.currentState === 'clock'){
+             this.currentState = 'calendar';
+             this.dateFormat = 'DD.MM.YYYY';
+           } else if (this.currentState === 'calendar'){
+             this.currentState = 'clock';
+             this.clockFormat = 'HH:MM';
+           };
+        });
+      };
+
+     // In this function we update the value throw it into <div> of our clock
+
+      ClockPrototype.updateValue = function(){
+         // this.newVal = this.getClockCalendarValue(this.currentState, this.clockFormat, this.dateFormat);
+
+         // if(this.newVal !== this.oldVal){
+         //  this.container.innerHTML = this.newVal;
+         //  this.oldVal = this.newVal;
+         // }
+
+          this.currentValue = this.getClockCalendarValue(this.currentState, this.clockFormat, this.dateFormat);
+          if (this.currentValue !== this.container.innerHTML){
+          	this.container.innerHTML = this.currentValue;
+          }
+      }
+
+      // In this function we check the value of 'currentState' and point what function to call and in what case
+
+       ClockPrototype.getClockCalendarValue = function(){
+        if(this.currentState === 'clock'){
+          this.result = this.getTime(this.clockFormat);
+        } else if (this.currentState === 'calendar'){
+           this.result = this.getDate(this.dateFormat);
+        };
+        return this.result;
+       };
+
+       // Here we form time and make its formats according to the given task
+
+       ClockPrototype.getTime = function(clockFormat){
+            this.date = new Date();
+            this.hours = this.date.getHours();
+            this.minutes = this.date.getMinutes();
+            this.secs = this.date.getSeconds();
+              this.hours = this.hours<10? '0'+ this.hours: this.hours;
+              this.minutes = this.minutes<10? '0'+ this.minutes: this.minutes;
+              this.secs = this.secs<10? '0'+ this.secs: this.secs;
+
+            if(clockFormat === 'HH:MM'){
+              return this.result = this.hours + ':' + this.minutes;
+            }  else  {
+              return this.result = this.hours + ':' + this.minutes + ':' + this.secs; 
+            }; 
+          return this.result; 
+       };
+
+      //Here we form the date and make its formats according to the given task
+
+       ClockPrototype.getDate = function(dateFormat){
+          this.date = new Date();
+          this.dayNum = this.date.getDate();
+          this.month = this.date.getMonth()+1;
+          this.year = this.date.getFullYear();
+
+        this.date_UA = this.date.toLocaleDateString('UA', {
+          day:'2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        this.date_EU = this.date.toLocaleDateString('en-EU', {
+          day:'2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        });
+        if(dateFormat === 'DD.MM.YYYY'){
+          this.result = this.date_UA;
+        } else if (dateFormat === 'MM/DD/YY'){
+          this.result = this.date_EU;
+        };
+        return this.result;
+       };
+
+   })(window, document);
+
+</script>
+ 
+</body>
+</html>
